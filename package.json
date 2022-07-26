@@ -1,0 +1,22 @@
+{
+  "name": "filesharingapp",
+  "version": "2.0.0",
+  "description": "## An online file sharing api.",
+  "main": "server/main.js",
+  "scripts": {
+    "test": "DB_USER=fsa DB_NAME=mydb DB_HOST=127.0.0.1 PORT=3000 node server/main.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maverickreal/fileSharingApp.git"
+  },
+  "author": "maverick",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/maverickreal/fileSharingApp/issues"
+  },
+  "homepage": "https://maverickfileshareapplication.herokuapp.com/",
+  "devDependencies": {
+    "mysql": "^2.18.1"
+  }
+}
