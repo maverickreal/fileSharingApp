@@ -4,9 +4,6 @@ const routes = {
     '/': {
         'GET': handlers.home,
     },
-    '/home': {
-        'GET': handlers.home
-    },
     '/about': {
         'GET': handlers.about
     },

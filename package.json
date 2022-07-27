@@ -17,6 +17,7 @@
   },
   "homepage": "https://maverickfileshareapplication.herokuapp.com/",
   "devDependencies": {
+    "busboy": "^1.6.0",
     "mysql": "^2.18.1"
   }
 }

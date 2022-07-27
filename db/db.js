@@ -1,3 +1,6 @@
+const path = require('path');
+const fs = require('fs');
+
 const db = require('mysql').createConnection({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
@@ -32,19 +35,29 @@ const getItem = (id, cb) => {
 
 const setItem = (file, cb) => {
     try {
-        db.query(`INSERT INTO FILES (FILE) VALUES ('${file}') ;`, (err, ret) => {
+        //append date and time at end
+        const time = new Date().getTime();
+        fs.writeFile(path.join(__dirname, '../store/', time + '_' + file.info.filename), file.data, err => {
             if (err) {
+                console.log('error3 : ' + err);
                 cb('error');
             }
-            else if (ret.length === 0) {
-                cb('not found');
-            }
-            else {
-                cb('success');
-            }
+            db.query(`INSERT INTO FILES (FILE) VALUES ('${time + '_' + file.info.filename}') ;`, (err, ret) => {
+                if (err) {
+                    console.log('error4 : ' + err);
+                    cb('error');
+                }
+                else if (ret.length === 0) {
+                    cb('not found');
+                }
+                else {
+                    cb('success');
+                }
+            });
         });
     }
     catch (err) {
+        console.log('error5: ' + err);
         cb('error');
     }
 }

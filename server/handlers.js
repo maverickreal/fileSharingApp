@@ -1,21 +1,23 @@
 const db = require('../db/db.js');
+const busboy = require('busboy');
+const fs = require('fs');
 
 // --------- request senders -------------------------
 const failure = (res) => {
-    res.statusCode = 400;
     res.setHeader('Content-Type', 'text/plain');
+    res.writeHead(400, { Connection: 'close', Location: '/' });
     res.end('Bad Request');
 }
 
 const success = (res) => {
-    res.statusCode = 200;
     res.setHeader('Content-Type', 'text/plain');
+    res.writeHead(200, { Connection: 'close', Location: '/' });
     res.end('OK');
 }
 
 const exception = (res) => {
-    res.statusCode = 500;
     res.setHeader('Content-Type', 'text/plain');
+    res.writeHead(500, { Connection: 'close', Location: '/' });
     res.end('Internal Server Error');
 }
 //-----------------------------------------------------
@@ -23,8 +25,8 @@ const exception = (res) => {
 // -------------handlers-------------------------------
 const home = (req, res) => {
     res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain');
-    res.end('Home');
+    res.setHeader('Content-Type', 'text/html');
+    res.end(fs.readFileSync('client/home.html'));
 }
 
 const about = (req, res) => {
@@ -70,7 +72,7 @@ const deleteFile = (req, res) => {
 }
 
 const updateFile = (req, res) => {
-    db.updateItem(req.params.id, req.params.file, status => {
+    db.updateItem(req.upload, req.params.file, status => {
         if (status === 'error') {
             exception(res);
         }
@@ -84,7 +86,7 @@ const updateFile = (req, res) => {
 }
 
 const setFile = (req, res) => {
-    db.setItem(req.params.file, status => {
+    db.setItem(req.upload, status => {
         if (status === 'error') {
             exception(res);
         }
@@ -98,11 +100,8 @@ const setFile = (req, res) => {
 }
 
 const file = (req, res) => {
-    if (!req.params) {
-        return failure(res);
-    }
     if (req.method === 'GET') {
-        if (!req.params.id) {
+        if (!(req.params && req.params.id)) {
             failure(res);
         }
         else {
@@ -111,7 +110,7 @@ const file = (req, res) => {
         return;
     }
     if (req.method === 'DELETE') {
-        if (!req.params.id) {
+        if (!(req.params && req.params.id)) {
             failure(res);
         }
         else {
@@ -120,7 +119,12 @@ const file = (req, res) => {
         return;
     }
     if (req.method === 'PATCH') {
-        if (!req.params.file) {
+        busboy({ headers: req.headers }).on('file', (name, file) => {
+            file.on('data', data => {
+                req.upload = data;
+            });
+        });
+        if (!req.upload) {
             failure(res);
         }
         else {
@@ -129,13 +133,19 @@ const file = (req, res) => {
         return;
     }
     if (req.method === 'POST') {
-        if (!req.params.file) {
-            failure(res);
-        }
-        else {
-            setFile(req, res);
-        }
-        return;
+        const bb = busboy({ headers: req.headers });
+        bb.on('file', (name, file, info) => {
+            file.on('data', data => {
+                if (!data) {
+                    failure(res);
+                }
+                else {
+                    req.upload = { name, data, info };
+                    setFile(req, res);
+                }
+            });
+        });
+        req.pipe(bb);
     }
 }
 
