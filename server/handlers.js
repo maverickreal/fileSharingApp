@@ -1,44 +1,23 @@
-const db = require('../db/db.js');
-const busboy = require('busboy');
-const fs = require('fs');
-
+const db = require('../db/db.js'),
+    busboy = require('busboy'),
+    fs = require('fs'),
+    zlib = require('zlib');
 // --------- request senders -------------------------
 const failure = (res) => {
-    res.setHeader('Content-Type', 'text/plain');
-    res.writeHead(400, { Connection: 'close', Location: '/' });
+    res.writeHead(400, { Connection: 'close', Location: '/', 'Content-Type': 'text/plain' });
     res.end('Bad Request');
 }
 
-const success = (res) => {
-    res.setHeader('Content-Type', 'text/plain');
-    res.writeHead(200, { Connection: 'close', Location: '/' });
-    res.end('OK');
-}
-
 const exception = (res) => {
-    res.setHeader('Content-Type', 'text/plain');
-    res.writeHead(500, { Connection: 'close', Location: '/' });
+    res.writeHead(500, { Connection: 'close', Location: '/', 'Content-Type': 'text/plain' });
     res.end('Internal Server Error');
 }
 //-----------------------------------------------------
 
 // -------------handlers-------------------------------
-const home = (req, res) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/html');
+const homeHandler = (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/HTML' });
     res.end(fs.readFileSync('client/home.html'));
-}
-
-const about = (req, res) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain');
-    res.end('About');
-}
-
-const contact = (req, res) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain');
-    res.end('Contact');
 }
 
 const getFile = (req, res) => {
@@ -50,15 +29,22 @@ const getFile = (req, res) => {
             exception(res);
         }
         else {
-            res.statusCode = 200;
-            res.setHeader('Content-Type', 'text/plain');
-            res.end(data);
+            res.writeHead(200, { Connection: 'close', Location: '/', 'Content-Type': 'application/octet-stream', 'Content-Disposition': 'attachment; filename=' + data.filename, 'Content-Encoding': 'gzip' });
+
+            data.file.on('data', chunk => {
+                res.write(chunk);
+            });
+
+            data.file.on('end', () => {
+                data.file.pipe(zlib.createGzip()).pipe(res);
+                res.end();
+            });
         }
     });
 }
 
-const deleteFile = (req, res) => {
-    db.deleteItem(req.params.id, status => {
+const setFile = (upload, res) => {
+    db.setItem(upload, status => {
         if (status === 'error') {
             exception(res);
         }
@@ -66,40 +52,13 @@ const deleteFile = (req, res) => {
             failure(res);
         }
         else {
-            success(res);
+            res.writeHead(200, { Connection: 'close', Location: '/', 'Content-Type': 'text/plain' });
+            res.end('OK');
         }
     });
 }
 
-const updateFile = (req, res) => {
-    db.updateItem(req.upload, req.params.file, status => {
-        if (status === 'error') {
-            exception(res);
-        }
-        else if (status === 'not found') {
-            failure(res);
-        }
-        else {
-            success(res);
-        }
-    });
-}
-
-const setFile = (req, res) => {
-    db.setItem(req.upload, status => {
-        if (status === 'error') {
-            exception(res);
-        }
-        else if (status === 'not found') {
-            failure(res);
-        }
-        else {
-            success(res);
-        }
-    });
-}
-
-const file = (req, res) => {
+const fileHandler = (req, res) => {
     if (req.method === 'GET') {
         if (!(req.params && req.params.id)) {
             failure(res);
@@ -107,51 +66,25 @@ const file = (req, res) => {
         else {
             getFile(req, res);
         }
-        return;
     }
-    if (req.method === 'DELETE') {
-        if (!(req.params && req.params.id)) {
-            failure(res);
-        }
-        else {
-            deleteFile(req, res);
-        }
-        return;
-    }
-    if (req.method === 'PATCH') {
-        busboy({ headers: req.headers }).on('file', (name, file) => {
-            file.on('data', data => {
-                req.upload = data;
+    else { // post
+        const bb = busboy({ headers: req.headers });
+        const upload = { data: [], filename: '' };
+        bb.on('file', (fieldname, file, info) => {
+            upload.filename = info.filename;
+            file.on('data', chunk => {
+                upload.data.push(chunk);
             });
         });
-        if (!req.upload) {
-            failure(res);
-        }
-        else {
-            updateFile(req, res);
-        }
-        return;
-    }
-    if (req.method === 'POST') {
-        const bb = busboy({ headers: req.headers });
-        bb.on('file', (name, file, info) => {
-            file.on('data', data => {
-                if (!data) {
-                    failure(res);
-                }
-                else {
-                    req.upload = { name, data, info };
-                    setFile(req, res);
-                }
-            });
+        bb.on('finish', () => {
+            upload.data = Buffer.concat(upload.data);
+            setFile(upload, res);
         });
         req.pipe(bb);
     }
 }
 
 module.exports = {
-    home,
-    about,
-    contact,
-    file
+    homeHandler,
+    fileHandler
 };

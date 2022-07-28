@@ -1,5 +1,8 @@
-const path = require('path');
-const fs = require('fs');
+const path = require('path'),
+    fs = require('fs'),
+    zlib = require('zlib'),
+    { Readable } = require('stream');
+
 
 const db = require('mysql').createConnection({
     host: process.env.DB_HOST,
@@ -9,13 +12,13 @@ const db = require('mysql').createConnection({
 
 db.connect(err => {
     if (err) {
-        console.log('error1 : ' + err);
+        console.error(err);
     }
 });
 
 const getItem = (id, cb) => {
     try {
-        db.query(`SELECT FILE FROM FILES WHERE ID = ${id} ;`, (err, ret) => {
+        db.query(`SELECT FILE, FILENAME FROM FILES WHERE ID = ${id} LIMIT 1 ;`, (err, ret) => {
             if (err) {
                 cb('error', null);
             }
@@ -23,29 +26,29 @@ const getItem = (id, cb) => {
                 cb('not found', null);
             }
             else {
-                cb(null, ret[0].FILE);
+                cb('success', { filename: ret[0].FILENAME, file: fs.createReadStream(path.join(__dirname, ret[0].FILE)) });
             }
         });
     }
-    catch (error) {
-        console.log('error2 : ' + error);
+    catch (err) {
+        console.error(err);
         cb('error', null);
     }
 }
 
 const setItem = (file, cb) => {
     try {
-        //append date and time at end
-        const time = new Date().getTime();
-        fs.writeFile(path.join(__dirname, '../store/', time + '_' + file.info.filename), file.data, err => {
-            if (err) {
-                console.log('error3 : ' + err);
-                cb('error');
-            }
-            db.query(`INSERT INTO FILES (FILE) VALUES ('${time + '_' + file.info.filename}') ;`, (err, ret) => {
+        const time = new Date().getTime(),
+            rs = Readable.from(file.data),
+            fileLoc = '../store/' + time + '_' + file.filename + '.gz',
+            ws = fs.createWriteStream(path.join(__dirname, fileLoc));
+
+        rs.pipe(zlib.createGzip()).pipe(ws);
+        ws.on('finish', () => {
+            db.query(`INSERT INTO FILES (FILE, FILENAME) VALUES ('${fileLoc}', '${file.filename}') ;`, (err, ret) => {
                 if (err) {
-                    console.log('error4 : ' + err);
-                    cb('error');
+                    console.error(err);
+                    cb('error', null);
                 }
                 else if (ret.length === 0) {
                     cb('not found');
@@ -57,66 +60,12 @@ const setItem = (file, cb) => {
         });
     }
     catch (err) {
-        console.log('error5: ' + err);
-        cb('error');
-    }
-}
-
-const updateItem = (id, file, cb) => {
-    try {
-        db.query(`SELECT FILE FROM FILES WHERE ID=${id} ;`, (err, ret) => {
-            if (err) {
-                cb('error');
-            }
-            else if (ret.length === 0) {
-                cb('not found');
-            }
-            else {
-                db.query(`UPDATE FILES SET FILE = '${file}' WHERE ID = ${id} ;`, err => {
-                    if (err) {
-                        cb('error');
-                    }
-                    else {
-                        cb('success');
-                    }
-                });
-            }
-        });
-    }
-    catch (err) {
-        cb('error');
-    }
-}
-
-const deleteItem = (id, cb) => {
-    try {
-        db.query(`SELECT FILE FROM FILES WHERE ID=${id} ;`, (err, ret) => {
-            if (err) {
-                cb('error');
-            }
-            else if (ret.length === 0) {
-                cb('not found');
-            }
-            else {
-                db.query(`DELETE FROM FILES WHERE ID = ${id} ;`, err => {
-                    if (err) {
-                        cb('error');
-                    }
-                    else {
-                        cb('success');
-                    }
-                });
-            }
-        });
-    }
-    catch (err) {
+        console.error(err);
         cb('error');
     }
 }
 
 module.exports = {
     getItem,
-    setItem,
-    updateItem,
-    deleteItem
+    setItem
 }
