@@ -1,7 +1,8 @@
 const db = require('../db/db.js'),
     busboy = require('busboy'),
     fs = require('fs'),
-    zlib = require('zlib');
+    zlib = require('zlib'),
+    mailer = require('./services/email.js');
 // --------- request senders -------------------------
 const failure = (res) => {
     res.writeHead(400, { Connection: 'close', Location: '/', 'Content-Type': 'text/plain' });
@@ -52,6 +53,7 @@ const setFile = (upload, res) => {
             failure(res);
         }
         else {
+            mailer.sendMail(upload.senderemail, upload.receiveremail, `<a>localhost:3000/file?id=${status}</a>`);
             res.writeHead(200, { Connection: 'close', Location: '/', 'Content-Type': 'text/plain' });
             res.end('OK');
         }
@@ -75,6 +77,9 @@ const fileHandler = (req, res) => {
             file.on('data', chunk => {
                 upload.data.push(chunk);
             });
+        });
+        bb.on('field', (fieldname, value) => {
+            upload[`${fieldname}`] = value;
         });
         bb.on('finish', () => {
             upload.data = Buffer.concat(upload.data);

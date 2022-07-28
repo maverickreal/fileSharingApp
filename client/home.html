@@ -6,14 +6,12 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>fileSharingApp</title>
-    <!-- use bootstrap 5-->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/5.0.0-alpha1/css/bootstrap.min.css"
         integrity="sha384-r4NyP46KrjDleawBgD5tp8Y7UzmLA05oM1iAEQ17CSuDqnUK2+k9luXQOfXJCJ4I" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css">
 </head>
 
 <body class="bg-dark">
-    <!-- A nice big bold heading at the center with glassmorphism -->
     <div class="container">
         <div class="row">
             <div class="col-md-12">
@@ -25,7 +23,6 @@
             </div>
         </div>
     </div>
-    <!-- The main content of the page -->
     <div class="container">
         <div class="row">
             <div class="col-md-12">
@@ -40,8 +37,13 @@
                             <div class="card-body">
                                 <h5 class="card-title">Upload a file</h5>
                                 <p class="card-text">
-                                <form action="file" method="post" enctype="multipart/form-data">
-                                    <input type="file" name="filetoupload" class="form-control-file">
+                                <form  action="file" method="post" enctype="multipart/form-data">
+                                    <input type="email" class="form-control" name="senderemail"
+                                        placeholder="Enter your email" required><br>
+                                    <input type="email" class="form-control" name="receiveremail"
+                                        placeholder="Enter reciever's email" required>
+                                    <br>
+                                    <input type="file" name="filetoupload" class="form-control-file" required>
                                     <input type="submit" class="btn btn-primary">
                                 </form>
                                 </p>

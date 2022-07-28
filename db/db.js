@@ -45,7 +45,7 @@ const setItem = (file, cb) => {
 
         rs.pipe(zlib.createGzip()).pipe(ws);
         ws.on('finish', () => {
-            db.query(`INSERT INTO FILES (FILE, FILENAME) VALUES ('${fileLoc}', '${file.filename}') ;`, (err, ret) => {
+            db.query(`INSERT INTO FILES (FILE, FILENAME, SENDEREMAIL, RECIEVEREMAIL) VALUES ('${fileLoc}', '${file.filename}', '${file.senderemail}', '${file.receiveremail}') ;`, (err, ret) => {
                 if (err) {
                     console.error(err);
                     cb('error', null);
@@ -54,7 +54,7 @@ const setItem = (file, cb) => {
                     cb('not found');
                 }
                 else {
-                    cb('success');
+                    cb(ret.insertId);
                 }
             });
         });
@@ -65,7 +65,4 @@ const setItem = (file, cb) => {
     }
 }
 
-module.exports = {
-    getItem,
-    setItem
-}
+module.exports = { getItem, setItem }
