@@ -10,4 +10,4 @@
 - CSS
 - Nodemailer package for email transfers
 
-[Deployed here](https://maverickfileshareapplication.herokuapp.com)
+[Deployed here](https://maverickfsa.herokuapp.com)
