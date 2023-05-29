@@ -20,3 +20,30 @@ Postman, NPM, etc.
 - HTML
 - CSS
 - Nodemailer package for email transfers
+
+## ready the data tier
+
+#### Create a user
+```sql
+create user fsa identified by '';
+```
+#### Grant it permissions
+```sql
+GRANT create, select, insert, update, delete, drop, alter
+ON *.* TO fsa;
+```
+#### Create a database
+```sql
+create database mydb;
+```
+#### Create a table
+```sql
+CREATE TABLE `FILES` (
+  `id` bigint(20) unsigned PRIMARY KEY AUTO_INCREMENT,
+  `FILE` text NOT NULL,
+  `FILENAME` text NOT NULL,
+  `SENDEREMAIL` text NOT NULL,
+  `RECIEVEREMAIL` text NOT NULL,
+  UNIQUE KEY `FILES_FILE_IDX` (`FILE`) USING HASH
+);
+```
