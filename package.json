@@ -4,7 +4,7 @@
   "description": "## An online file sharing api.",
   "main": "server/main.js",
   "scripts": {
-    "test": "SENDGRID_USERNAME=apikey SENDGRID_PASSWORD=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 SENDGRID_PORT=465 DB_USER=fsa DB_NAME=mydb DB_HOST=127.0.0.1 PORT=3000 node server/main.js"
+    "test": "SENDGRID_PORT=465 SENDGRID_USERNAME=apikey SENDGRID_API_KEY= SENDGRID_VERIFIED_SENDER=adity.saxena09@gmail.com DB_USER=fsa DB_NAME=mydb DB_HOST=127.0.0.1 PORT=3000 node server/main.js"
   },
   "repository": {
     "type": "git",

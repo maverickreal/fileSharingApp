@@ -53,7 +53,7 @@ const setFile = (upload, res) => {
             failure(res);
         }
         else {
-            mailer.sendMail(upload.senderemail, upload.receiveremail, `<a>localhost:3000/file?id=${status}</a>`);
+            mailer.sendMail(upload.senderemail, upload.receiveremail, `<a>http://127.0.0.1:3000/file?id=${status}</a>`);
             res.writeHead(200, { Connection: 'close', Location: '/', 'Content-Type': 'text/plain' });
             res.end('OK');
         }
