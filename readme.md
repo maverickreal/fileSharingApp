@@ -1,4 +1,4 @@
-# mShare
+# fileSharingApp
 
 ## An online file sharing application.
 The sender enters the receiver’s email address
