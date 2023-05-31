@@ -1,5 +1,6 @@
 const routes = require('./routes');
 const urlParser = require('url');
+const fs = require('fs');
 
 const server = require('http').createServer((req, res) => {
     const url = urlParser.parse(req.url, true);
@@ -17,4 +18,7 @@ const server = require('http').createServer((req, res) => {
     routes[url.pathname][req.method](req, res);
 });
 
-server.listen(process.env.PORT);
+server.listen(process.env.PORT, () =>{
+    fs.mkdirSync('store');
+    console.log(`Listening @ ${process.env.PORT}`);
+});
